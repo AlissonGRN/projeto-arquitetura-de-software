@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from view.shopping_list_view import ShoppingListView
+
 
 class MainMenu:
     def __init__(self, root):
@@ -49,4 +51,7 @@ class MainMenu:
         )
 
     def start_application(self):
-        print("Aplicação iniciada")
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+        ShoppingListView(self.root)
