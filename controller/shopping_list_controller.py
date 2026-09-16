@@ -2,10 +2,14 @@ from decimal import Decimal, InvalidOperation
 
 from models.product import Product
 from models.shopping_list import ShoppingList
+
+from observer.observer import Observer
+
 from view.shopping_list_view import ShoppingListView
 
 
-class ShoppingListController:
+class ShoppingListController(Observer):
+
     def __init__(
         self,
         model: ShoppingList,
@@ -16,8 +20,27 @@ class ShoppingListController:
         self.view = view
         self.on_back = on_back
 
+        # Registra o Controller como
+        # observador do ShoppingList.
+        self.model.add_observer(
+            self
+        )
+
         self.configure_events()
+
         self.update_view()
+
+    # =========================
+    # Observer
+    # =========================
+
+    def update(self, subject):
+        if subject is self.model:
+            self.update_view()
+
+    # =========================
+    # Eventos da View
+    # =========================
 
     def configure_events(self):
         self.view.set_add_command(
@@ -29,14 +52,44 @@ class ShoppingListController:
         )
 
         self.view.set_back_command(
-            self.on_back
+            self.go_back
         )
 
+    def go_back(self):
+        self.model.remove_observer(
+            self
+        )
+
+        self.on_back()
+
+    # =========================
+    # Adicionar produto
+    # =========================
+
     def add_product(self):
-        name = self.view.get_product_name().strip()
-        quantity_text = self.view.get_quantity().strip()
-        category = self.view.get_category().strip()
-        price_text = self.view.get_price().strip()
+        name = (
+            self.view
+            .get_product_name()
+            .strip()
+        )
+
+        quantity_text = (
+            self.view
+            .get_quantity()
+            .strip()
+        )
+
+        category = (
+            self.view
+            .get_category()
+            .strip()
+        )
+
+        price_text = (
+            self.view
+            .get_price()
+            .strip()
+        )
 
         # -------------------------
         # Nome
@@ -59,7 +112,10 @@ class ShoppingListController:
             return
 
         try:
-            quantity = int(quantity_text)
+            quantity = int(
+                quantity_text
+            )
+
         except ValueError:
             self.view.show_error(
                 "A quantidade deve ser um número inteiro."
@@ -93,6 +149,7 @@ class ShoppingListController:
             price = self.parse_price_to_cents(
                 price_text
             )
+
         except ValueError:
             self.view.show_error(
                 "Informe um preço válido. Exemplo: 10,50"
@@ -106,7 +163,7 @@ class ShoppingListController:
             return
 
         # -------------------------
-        # Criação do Model
+        # Criação do produto
         # -------------------------
 
         product = Product(
@@ -123,10 +180,15 @@ class ShoppingListController:
 
         self.view.clear_inputs()
 
-        self.update_view()
+    # =========================
+    # Remover produto
+    # =========================
 
     def remove_product(self):
-        selected_item = self.view.get_selected_item()
+        selected_item = (
+            self.view
+            .get_selected_item()
+        )
 
         if selected_item is None:
             self.view.show_error(
@@ -141,15 +203,20 @@ class ShoppingListController:
         if product_index < 0:
             return
 
-        if product_index >= len(self.model.products):
+        if product_index >= len(
+            self.model.products
+        ):
             return
 
         product = self.model.products[
             product_index
         ]
 
-        confirmed = self.view.confirm_delete_product(
-            product.name
+        confirmed = (
+            self.view
+            .confirm_delete_product(
+                product.name
+            )
         )
 
         if not confirmed:
@@ -159,7 +226,9 @@ class ShoppingListController:
             product
         )
 
-        self.update_view()
+    # =========================
+    # Atualização da View
+    # =========================
 
     def update_view(self):
         self.view.clear_products()
@@ -188,8 +257,14 @@ class ShoppingListController:
             self.model.total
         )
 
+    # =========================
+    # Preço
+    # =========================
+
     @staticmethod
-    def parse_price_to_cents(price_text):
+    def parse_price_to_cents(
+        price_text
+    ):
         value = (
             price_text
             .replace("R$", "")
@@ -211,7 +286,10 @@ class ShoppingListController:
             )
 
         try:
-            decimal_value = Decimal(value)
+            decimal_value = Decimal(
+                value
+            )
+
         except InvalidOperation:
             raise ValueError(
                 "Preço inválido"
