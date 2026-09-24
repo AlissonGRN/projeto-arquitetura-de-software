@@ -1,6 +1,7 @@
 from decimal import Decimal, InvalidOperation
 
-from models.product import Product
+from facade.shopping_facade import ShoppingFacade
+
 from models.shopping_list import ShoppingList
 
 from observer.observer import Observer
@@ -14,14 +15,17 @@ class ShoppingListController(Observer):
         self,
         model: ShoppingList,
         view: ShoppingListView,
+        facade: ShoppingFacade,
         on_back
     ):
         self.model = model
         self.view = view
+        self.facade = facade
         self.on_back = on_back
 
-        # Registra o Controller como
-        # observador do ShoppingList.
+        # Observer:
+        # registra este Controller
+        # como observador do Model.
         self.model.add_observer(
             self
         )
@@ -30,17 +34,13 @@ class ShoppingListController(Observer):
 
         self.update_view()
 
-    # =========================
     # Observer
-    # =========================
 
     def update(self, subject):
         if subject is self.model:
             self.update_view()
 
-    # =========================
-    # Eventos da View
-    # =========================
+    # Eventos
 
     def configure_events(self):
         self.view.set_add_command(
@@ -62,9 +62,7 @@ class ShoppingListController(Observer):
 
         self.on_back()
 
-    # =========================
     # Adicionar produto
-    # =========================
 
     def add_product(self):
         name = (
@@ -91,9 +89,7 @@ class ShoppingListController(Observer):
             .strip()
         )
 
-        # -------------------------
         # Nome
-        # -------------------------
 
         if not name:
             self.view.show_error(
@@ -101,9 +97,7 @@ class ShoppingListController(Observer):
             )
             return
 
-        # -------------------------
         # Quantidade
-        # -------------------------
 
         if not quantity_text:
             self.view.show_error(
@@ -128,16 +122,12 @@ class ShoppingListController(Observer):
             )
             return
 
-        # -------------------------
         # Categoria
-        # -------------------------
 
         if not category:
             category = "Sem categoria"
 
-        # -------------------------
         # Preço
-        # -------------------------
 
         if not price_text:
             self.view.show_error(
@@ -146,43 +136,32 @@ class ShoppingListController(Observer):
             return
 
         try:
-            price = self.parse_price_to_cents(
-                price_text
+            price = (
+                self.parse_price_to_cents(
+                    price_text
+                )
             )
 
         except ValueError:
             self.view.show_error(
-                "Informe um preço válido. Exemplo: 10,50"
+                "Informe um preço válido. "
+                "Exemplo: 10,50"
             )
             return
 
-        if price < 0:
-            self.view.show_error(
-                "O preço não pode ser negativo."
-            )
-            return
+        # Facade
 
-        # -------------------------
-        # Criação do produto
-        # -------------------------
-
-        product = Product(
-            list_id=self.model.id,
+        self.facade.add_product(
+            shopping_list=self.model,
             name=name,
             quantity=quantity,
             category=category,
             price=price
         )
 
-        self.model.add_product(
-            product
-        )
-
         self.view.clear_inputs()
 
-    # =========================
     # Remover produto
-    # =========================
 
     def remove_product(self):
         selected_item = (
@@ -222,13 +201,12 @@ class ShoppingListController(Observer):
         if not confirmed:
             return
 
-        self.model.remove_product(
-            product
+        self.facade.remove_product(
+            shopping_list=self.model,
+            product=product
         )
 
-    # =========================
     # Atualização da View
-    # =========================
 
     def update_view(self):
         self.view.clear_products()
@@ -236,6 +214,7 @@ class ShoppingListController(Observer):
         for index, product in enumerate(
             self.model.products
         ):
+
             self.view.add_product_to_table(
                 product_index=index,
                 name=product.name,
@@ -244,9 +223,18 @@ class ShoppingListController(Observer):
                 price=product.price
             )
 
-        total_items = sum(
-            product.quantity or 0
-            for product in self.model.products
+        total_items = (
+            self.facade
+            .get_total_items(
+                self.model
+            )
+        )
+
+        total_price = (
+            self.facade
+            .get_list_total(
+                self.model
+            )
         )
 
         self.view.update_items_total(
@@ -254,12 +242,10 @@ class ShoppingListController(Observer):
         )
 
         self.view.update_price_total(
-            self.model.total
+            total_price
         )
 
-    # =========================
-    # Preço
-    # =========================
+    # Conversão de preço
 
     @staticmethod
     def parse_price_to_cents(
@@ -273,8 +259,17 @@ class ShoppingListController(Observer):
         )
 
         # Formato brasileiro:
-        # 1.234,56 -> 1234.56
+        #
+        # 10,50
+        # 1.234,56
+        #
+        # vira:
+        #
+        # 10.50
+        # 1234.56
+
         if "," in value:
+
             value = value.replace(
                 ".",
                 ""

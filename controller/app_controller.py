@@ -1,4 +1,4 @@
-from models.shopping_list import ShoppingList
+from facade.shopping_facade import ShoppingFacade
 
 from view.main_menu import MainMenu
 from view.shopping_list_view import ShoppingListView
@@ -9,11 +9,13 @@ from controller.shopping_list_controller import (
 
 
 class AppController:
-    def __init__(self, root):
+    def __init__(
+        self,
+        root,
+        facade: ShoppingFacade
+    ):
         self.root = root
-
-        self.shopping_lists = {}
-        self.next_list_id = 1
+        self.facade = facade
 
         self.main_view = None
         self.shopping_controller = None
@@ -53,18 +55,23 @@ class AppController:
             list_name=shopping_list.name
         )
 
-        self.shopping_controller = ShoppingListController(
-            model=shopping_list,
-            view=shopping_view,
-            on_back=self.show_main_menu
+        self.shopping_controller = (
+            ShoppingListController(
+                model=shopping_list,
+                view=shopping_view,
+                facade=self.facade,
+                on_back=self.show_main_menu
+            )
         )
 
-    # =========================
-    # Listas
-    # =========================
+    # Criar lista
 
     def create_list(self):
-        name = self.main_view.get_list_name().strip()
+        name = (
+            self.main_view
+            .get_list_name()
+            .strip()
+        )
 
         if not name:
             self.main_view.show_error(
@@ -72,20 +79,15 @@ class AppController:
             )
             return
 
-        shopping_list = ShoppingList(
-            id=self.next_list_id,
-            name=name
+        self.facade.create_list(
+            name
         )
-
-        self.shopping_lists[
-            self.next_list_id
-        ] = shopping_list
-
-        self.next_list_id += 1
 
         self.main_view.clear_name_input()
 
         self.update_main_menu()
+
+    # Abrir lista
 
     def open_selected_list(self):
         list_id = (
@@ -99,8 +101,10 @@ class AppController:
             )
             return
 
-        shopping_list = self.shopping_lists.get(
-            list_id
+        shopping_list = (
+            self.facade.get_list(
+                list_id
+            )
         )
 
         if shopping_list is None:
@@ -112,6 +116,8 @@ class AppController:
         self.show_shopping_list(
             shopping_list
         )
+
+    # Excluir lista
 
     def delete_selected_list(self):
         list_id = (
@@ -125,8 +131,10 @@ class AppController:
             )
             return
 
-        shopping_list = self.shopping_lists.get(
-            list_id
+        shopping_list = (
+            self.facade.get_list(
+                list_id
+            )
         )
 
         if shopping_list is None:
@@ -135,18 +143,23 @@ class AppController:
             )
             return
 
-        confirmed = self.main_view.confirm_delete(
-            shopping_list.name
+        confirmed = (
+            self.main_view
+            .confirm_delete(
+                shopping_list.name
+            )
         )
 
         if not confirmed:
             return
 
-        del self.shopping_lists[
+        self.facade.delete_list(
             list_id
-        ]
+        )
 
         self.update_main_menu()
+
+    # Atualização do menu
 
     def update_main_menu(self):
         if self.main_view is None:
@@ -154,17 +167,29 @@ class AppController:
 
         self.main_view.clear_lists()
 
-        for list_id, shopping_list in (
-            self.shopping_lists.items()
-        ):
-            total_items = sum(
-                product.quantity or 0
-                for product in shopping_list.products
+        shopping_lists = (
+            self.facade.get_lists()
+        )
+
+        for shopping_list in shopping_lists:
+
+            total_items = (
+                self.facade
+                .get_total_items(
+                    shopping_list
+                )
+            )
+
+            total = (
+                self.facade
+                .get_list_total(
+                    shopping_list
+                )
             )
 
             self.main_view.add_list_to_table(
-                list_id=list_id,
+                list_id=shopping_list.id,
                 name=shopping_list.name,
                 items=total_items,
-                total=shopping_list.total
+                total=total
             )

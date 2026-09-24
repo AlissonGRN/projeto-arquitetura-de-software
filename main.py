@@ -1,7 +1,10 @@
 import tkinter as tk
 
 from controller.app_controller import AppController
+
 from database.connection import initialize_database
+
+from facade.shopping_facade import ShoppingFacade
 
 
 def main():
@@ -9,7 +12,12 @@ def main():
 
     root = tk.Tk()
 
-    AppController(root)
+    facade = ShoppingFacade()
+
+    AppController(
+        root,
+        facade
+    )
 
     root.mainloop()
 
