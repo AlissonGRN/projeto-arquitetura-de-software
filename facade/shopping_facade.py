@@ -3,13 +3,6 @@ from models.shopping_list import ShoppingList
 
 
 class ShoppingFacade:
-    """
-    Singleton que centraliza o acesso às operações de listas de compras.
-
-    Todas as chamadas a ShoppingFacade() retornam a mesma instância,
-    preservando o estado compartilhado durante a execução da aplicação.
-    """
-
     _instance = None
 
     def __new__(cls):
@@ -18,8 +11,6 @@ class ShoppingFacade:
         return cls._instance
 
     def __init__(self):
-        # __init__ é chamado em toda expressão ShoppingFacade().
-        # Inicializar apenas uma vez evita apagar os dados compartilhados.
         if getattr(self, "_initialized", False):
             return
 
