@@ -7,6 +7,9 @@ from controller.shopping_list_controller import (
     ShoppingListController
 )
 
+from strategies.sort_by_id import SortById
+from strategies.sort_by_name import SortByName
+
 
 class AppController:
     def __init__(
@@ -19,6 +22,7 @@ class AppController:
 
         self.main_view = None
         self.shopping_controller = None
+        self.sorting_strategy = SortById()
 
         self.show_main_menu()
 
@@ -39,7 +43,8 @@ class AppController:
             self.root,
             on_create=self.create_list,
             on_open=self.open_selected_list,
-            on_delete=self.delete_selected_list
+            on_delete=self.delete_selected_list,
+            on_sort_change=self.change_sorting_strategy
         )
 
         self.update_main_menu()
@@ -167,7 +172,7 @@ class AppController:
 
         self.main_view.clear_lists()
 
-        shopping_lists = (
+        shopping_lists = self.sorting_strategy.sort(
             self.facade.get_lists()
         )
 
@@ -193,3 +198,13 @@ class AppController:
                 items=total_items,
                 total=total
             )
+
+
+    # troca o strategy para ordenação
+    def change_sorting_strategy(self, choice):
+        if choice == "Nome":
+            self.sorting_strategy = SortByName()
+        else:
+            self.sorting_strategy = SortById()
+
+        self.update_main_menu()

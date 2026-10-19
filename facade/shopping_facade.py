@@ -2,6 +2,7 @@ from models.product import Product
 from models.shopping_list import ShoppingList
 
 
+
 class ShoppingFacade:
     _instance = None
 
@@ -118,3 +119,4 @@ class ShoppingFacade:
     ) -> int:
 
         return shopping_list.total
+

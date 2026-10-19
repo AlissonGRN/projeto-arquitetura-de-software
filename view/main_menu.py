@@ -7,12 +7,14 @@ class MainMenu:
         root,
         on_create,
         on_open,
-        on_delete
+        on_delete,
+        on_sort_change
     ):
         self.root = root
         self.on_create = on_create
         self.on_open = on_open
         self.on_delete = on_delete
+        self.on_sort_change = on_sort_change
 
         self.root.title("Listas de Compras")
         self.root.geometry("750x520")
@@ -126,6 +128,37 @@ class MainMenu:
         list_label.pack(
             anchor="w",
             pady=(0, 10)
+        )
+        # implementação do strategy para ordenação
+        sort_frame = ttk.Frame(main_frame)
+
+        sort_frame.pack(
+            fill="x",
+            pady=(0, 8)
+        )
+
+        ttk.Label(
+            sort_frame,
+            text="Ordenar por:"
+        ).pack(
+            side="left",
+            padx=(0, 8)
+        )
+
+        self.sort_choice = ttk.Combobox(
+            sort_frame,
+            values=("ID", "Nome"),
+            state="readonly",
+            width=12
+        )
+
+        self.sort_choice.set("ID")
+        self.sort_choice.pack(side="left")
+        self.sort_choice.bind(
+            "<<ComboboxSelected>>",
+            lambda event: self.on_sort_change(
+                self.sort_choice.get()
+            )
         )
 
         table_frame = ttk.Frame(
