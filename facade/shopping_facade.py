@@ -1,3 +1,8 @@
+from pathlib import Path
+
+from dao.product_dao import ProductDAO
+from dao.shopping_list_dao import ShoppingListDAO
+from database.connection import DATABASE_PATH, initialize_database
 from models.product import Product
 from models.shopping_list import ShoppingList
 
@@ -6,18 +11,33 @@ from models.shopping_list import ShoppingList
 class ShoppingFacade:
     _instance = None
 
-    def __new__(cls):
+    def __new__(cls, database_path=None):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, database_path: str | Path | None = None):
         if getattr(self, "_initialized", False):
             return
 
-        self.shopping_lists: dict[int, ShoppingList] = {}
-        self.next_list_id = 1
+        self.database_path = database_path or DATABASE_PATH
+        initialize_database(self.database_path)
+        self.shopping_list_dao = ShoppingListDAO(self.database_path)
+        self.product_dao = ProductDAO(self.database_path)
+        self.shopping_lists = {
+            shopping_list.id: shopping_list
+            for shopping_list in self.shopping_list_dao.get_all()
+        }
+        for shopping_list in self.shopping_lists.values():
+            shopping_list.products = self.product_dao.get_by_list_id(
+                shopping_list.id
+            )
         self._initialized = True
+
+    @classmethod
+    def reset_instance(cls):
+        """Reset the Singleton so tests can use isolated databases."""
+        cls._instance = None
 
     # Listas
 
@@ -25,16 +45,11 @@ class ShoppingFacade:
         self,
         name: str
     ) -> ShoppingList:
-        shopping_list = ShoppingList(
-            id=self.next_list_id,
-            name=name
-        )
+        shopping_list = self.shopping_list_dao.create(name)
 
         self.shopping_lists[
-            self.next_list_id
+            shopping_list.id
         ] = shopping_list
-
-        self.next_list_id += 1
 
         return shopping_list
 
@@ -42,9 +57,7 @@ class ShoppingFacade:
         self,
         list_id: int
     ) -> ShoppingList | None:
-        return self.shopping_lists.get(
-            list_id
-        )
+        return self.shopping_lists.get(list_id)
 
     def get_lists(
         self
@@ -60,9 +73,10 @@ class ShoppingFacade:
         if list_id not in self.shopping_lists:
             return False
 
-        del self.shopping_lists[
-            list_id
-        ]
+        if not self.shopping_list_dao.delete(list_id):
+            return False
+
+        del self.shopping_lists[list_id]
 
         return True
 
@@ -77,12 +91,12 @@ class ShoppingFacade:
         price: int
     ) -> Product:
 
-        product = Product(
+        product = self.product_dao.create(
             list_id=shopping_list.id,
             name=name,
             quantity=quantity,
             category=category,
-            price=price
+            price=price,
         )
 
         shopping_list.add_product(
@@ -95,11 +109,12 @@ class ShoppingFacade:
         self,
         shopping_list: ShoppingList,
         product: Product
-    ) -> None:
+    ) -> bool:
+        if not self.product_dao.delete(product.id, shopping_list.id):
+            return False
 
-        shopping_list.remove_product(
-            product
-        )
+        shopping_list.remove_product(product)
+        return True
 
     # Consultas
 
