@@ -23,7 +23,7 @@ class Database:
                 )
             return
         project_root = Path(__file__).resolve().parents[3]
-        default_path = project_root / "data" / "shopping.sqlite3"
+        default_path = project_root / "database" / "db.sqlite"
         self.database_path = Path(database_path).resolve() if database_path else default_path
         self.schema_path = Path(__file__).with_name("schema.sql")
         self._initialized = True
