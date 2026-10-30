@@ -15,8 +15,14 @@ def build_facade(database_path=None) -> ShoppingFacade:
     database.initialize()
     shopping_list_dao = ShoppingListDAO(database)
     product_dao = ProductDAO(database)
-    shopping_list_service = ShoppingListService(shopping_list_dao, product_dao)
-    product_service = ProductService(shopping_list_dao, product_dao)
+    shopping_list_service = ShoppingListService(
+        shopping_list_repository=shopping_list_dao,
+        product_repository=product_dao,
+    )
+    product_service = ProductService(
+        shopping_list_repository=shopping_list_dao,
+        product_repository=product_dao,
+    )
     return ShoppingFacade(shopping_list_service, product_service)
 
 
