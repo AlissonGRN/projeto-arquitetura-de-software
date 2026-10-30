@@ -12,7 +12,7 @@ class ProductDAO:
         with self._database.connection_scope() as connection:
             cursor = connection.execute(
                 """INSERT INTO products
-                   (list_id, name, quantity, category, unit_price_cents)
+                   (list_id, name, quantity, category, price)
                    VALUES (?, ?, ?, ?, ?)""",
                 (
                     list_id,
@@ -23,7 +23,7 @@ class ProductDAO:
                 ),
             )
             row = connection.execute(
-                """SELECT id, list_id, name, quantity, category, unit_price_cents
+                """SELECT id, list_id, name, quantity, category, price
                    FROM products WHERE id = ?""",
                 (cursor.lastrowid,),
             ).fetchone()
@@ -32,7 +32,7 @@ class ProductDAO:
     def get_by_list_id(self, list_id: int) -> list[Product]:
         with self._database.connection_scope() as connection:
             rows = connection.execute(
-                """SELECT id, list_id, name, quantity, category, unit_price_cents
+                """SELECT id, list_id, name, quantity, category, price
                    FROM products WHERE list_id = ? ORDER BY id""",
                 (list_id,),
             ).fetchall()
@@ -56,5 +56,5 @@ class ProductDAO:
             name=row["name"],
             quantity=row["quantity"],
             category=row["category"],
-            unit_price=Money.from_cents(row["unit_price_cents"]),
+            unit_price=Money.from_cents(row["price"]),
         )
