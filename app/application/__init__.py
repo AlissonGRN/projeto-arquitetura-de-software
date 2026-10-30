@@ -1,1 +1,1 @@
-"""application."""
+"""Pacote application da aplicação."""

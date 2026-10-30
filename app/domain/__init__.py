@@ -1,1 +1,1 @@
-"""domain."""
+"""Pacote domain da aplicação."""

@@ -1,1 +1,1 @@
-"""infrastructure."""
+"""Pacote infrastructure da aplicação."""

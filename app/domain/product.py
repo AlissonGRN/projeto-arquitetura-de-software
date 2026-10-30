@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from app.domain.value_objects.money import Money
+from app.domain.money import Money
 
 
 @dataclass(slots=True)
 class Product:
-    """Entidade Produto; preço é sempre um Value Object Money."""
+    """Entidade do domínio que representa um produto da lista."""
     name: str
     quantity: int
     category: str
@@ -12,7 +12,7 @@ class Product:
     id: int | None = None
     list_id: int | None = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         self.name = self.name.strip()
         self.category = self.category.strip() or "Sem categoria"
         if not self.name:
@@ -22,8 +22,8 @@ class Product:
         if self.quantity <= 0:
             raise ValueError("A quantidade deve ser maior que zero.")
         if not isinstance(self.unit_price, Money):
-            raise TypeError("O preço unitário deve ser um objeto Money.")
+            raise TypeError("O preço deve ser um objeto Money.")
 
     @property
-    def subtotal(self) -> Money:
+    def subtotal(self):
         return self.unit_price * self.quantity

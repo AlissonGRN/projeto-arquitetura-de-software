@@ -4,7 +4,7 @@ import sqlite3
 
 
 class Database:
-    """Singleton do gerenciador; cada operação recebe uma conexão isolada."""
+    """Singleton simples responsável por configurar e abrir conexões SQLite."""
     _instance = None
 
     def __new__(cls, database_path=None):
@@ -17,25 +17,18 @@ class Database:
         if self._initialized:
             requested = Path(database_path).resolve() if database_path else self.database_path
             if requested != self.database_path:
-                raise RuntimeError(
-                    "O Singleton Database já foi configurado com outro caminho. "
-                    "Use reset_instance() apenas em testes isolados."
-                )
+                raise RuntimeError("O Database já foi configurado com outro caminho.")
             return
-        project_root = Path(__file__).resolve().parents[3]
+
+        project_root = Path(__file__).resolve().parents[2]
         default_path = project_root / "database" / "db.sqlite"
         self.database_path = Path(database_path).resolve() if database_path else default_path
         self.schema_path = Path(__file__).with_name("schema.sql")
         self._initialized = True
 
     @classmethod
-    def get_instance(cls, database_path=None) -> "Database":
+    def get_instance(cls, database_path=None):
         return cls(database_path)
-
-    @classmethod
-    def reset_instance(cls) -> None:
-        """Ponto de isolamento usado exclusivamente pelos testes."""
-        cls._instance = None
 
     def connect(self):
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
@@ -56,7 +49,7 @@ class Database:
         finally:
             connection.close()
 
-    def initialize(self) -> None:
+    def initialize(self):
         schema = self.schema_path.read_text(encoding="utf-8")
         with self.connection_scope() as connection:
             connection.executescript(schema)

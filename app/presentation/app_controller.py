@@ -1,15 +1,13 @@
-from app.application.strategies.sorting.sort_by_id import SortById
-from app.application.strategies.sorting.sort_by_name import SortByName
-from app.application.facades.shopping_facade import ShoppingFacade
-from app.presentation.controllers.shopping_list_controller import ShoppingListController
-from app.presentation.views.tkinter.main_menu import MainMenu
-from app.presentation.views.tkinter.shopping_list_view import ShoppingListView
+from app.application.sorting import SortById, SortByName
+from app.presentation.shopping_list_controller import ShoppingListController
+from app.presentation.main_menu import MainMenu
+from app.presentation.shopping_list_view import ShoppingListView
 
 
 class AppController:
-    """Coordena navegação e traduz ações da tela em chamadas à Facade."""
+    """Controla a navegação entre o menu principal e uma lista."""
 
-    def __init__(self, root, facade: ShoppingFacade):
+    def __init__(self, root, facade):
         self.root = root
         self.facade = facade
         self.main_view = None
@@ -50,7 +48,7 @@ class AppController:
             return
         try:
             self.facade.create_list(name)
-        except ValueError as error:
+        except (ValueError, TypeError) as error:
             self.main_view.show_error(str(error))
             return
         self.main_view.clear_name_input()
