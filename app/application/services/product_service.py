@@ -8,11 +8,11 @@ class ProductService:
 
     def __init__(
         self,
-        shopping_list_dao: ShoppingListRepository,
-        product_dao: ProductRepository,
+        shopping_list_repository: ShoppingListRepository,
+        product_repository: ProductRepository,
     ):
-        self._shopping_list_dao = shopping_list_dao
-        self._product_dao = product_dao
+        self._shopping_list_repository = shopping_list_repository
+        self._product_repository = product_repository
 
     def add(
         self,
@@ -22,7 +22,7 @@ class ProductService:
         category: str,
         unit_price: Money,
     ) -> Product:
-        if self._shopping_list_dao.get_by_id(shopping_list.id) is None:
+        if self._shopping_list_repository.get_by_id(shopping_list.id) is None:
             raise ValueError("A lista não existe mais no banco de dados.")
         candidate = Product(
             name=name,
@@ -32,14 +32,14 @@ class ProductService:
             list_id=shopping_list.id,
         )
         # Persistir primeiro: uma falha não altera o agregado nem notifica.
-        persisted_product = self._product_dao.create(shopping_list.id, candidate)
+        persisted_product = self._product_repository.create(shopping_list.id, candidate)
         shopping_list.add_product(persisted_product)
         return persisted_product
 
     def remove(self, shopping_list, product: Product) -> bool:
         if product.id is None:
             return False
-        deleted = self._product_dao.delete(product.id, shopping_list.id)
+        deleted = self._product_repository.delete(product.id, shopping_list.id)
         if not deleted:
             return False
         shopping_list.remove_product(product)
