@@ -76,8 +76,7 @@ class ShoppingListController(Observer):
                 name=product.name,
                 quantity=product.quantity,
                 category=product.category,
-                price=product.unit_price.format_brl(),
-                subtotal=product.subtotal.format_brl(),
+                price=product.unit_price.cents,
             )
         self.view.update_items_total(self.model.total_items)
-        self.view.update_price_total(self.model.total.format_brl())
+        self.view.update_price_total(self.model.total.cents)
