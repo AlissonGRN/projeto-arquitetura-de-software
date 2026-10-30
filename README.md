@@ -10,7 +10,7 @@ Requisitos: Python 3.10 ou superior. A aplicação usa apenas a biblioteca padr�
 
     python main.py
 
-O banco é criado automaticamente em data/shopping.sqlite3.
+O banco é criado automaticamente em database/db.sqlite.
 
 ## Testes
 
