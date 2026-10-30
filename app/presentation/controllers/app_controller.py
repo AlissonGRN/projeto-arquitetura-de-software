@@ -90,7 +90,7 @@ class AppController:
                 list_id=shopping_list.id,
                 name=shopping_list.name,
                 items=shopping_list.total_items,
-                total=shopping_list.total,
+                total=shopping_list.total.cents,
             )
 
     def change_sorting_strategy(self, choice):
