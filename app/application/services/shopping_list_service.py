@@ -19,16 +19,18 @@ class ShoppingListService:
     def get_by_id(self, list_id: int) -> ShoppingList | None:
         shopping_list = self._shopping_list_dao.get_by_id(list_id)
         if shopping_list is not None:
-            shopping_list.replace_products(self._product_dao.get_by_list_id(list_id))
+            shopping_list.replace_products(
+                self._product_dao.get_by_list_id(list_id)
+            )
         return shopping_list
 
-    def get_all(self) -> list[ShoppingList]:
+    def get_all(self, sorting_strategy=None) -> list[ShoppingList]:
         shopping_lists = self._shopping_list_dao.get_all()
         for shopping_list in shopping_lists:
             shopping_list.replace_products(
                 self._product_dao.get_by_list_id(shopping_list.id)
             )
-        return shopping_lists
+        return sorting_strategy.sort(shopping_lists) if sorting_strategy else shopping_lists
 
     def delete(self, list_id: int) -> bool:
         return self._shopping_list_dao.delete(list_id)
