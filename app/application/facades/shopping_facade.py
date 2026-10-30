@@ -20,8 +20,7 @@ class ShoppingFacade:
         return self._shopping_list_service.get_by_id(list_id)
 
     def get_lists(self, sorting_strategy=None):
-        lists = self._shopping_list_service.get_all()
-        return sorting_strategy.sort(lists) if sorting_strategy else lists
+        return self._shopping_list_service.get_all(sorting_strategy)
 
     def delete_list(self, list_id: int) -> bool:
         return self._shopping_list_service.delete(list_id)
@@ -33,11 +32,3 @@ class ShoppingFacade:
 
     def remove_product(self, shopping_list, product) -> bool:
         return self._product_service.remove(shopping_list, product)
-
-    @staticmethod
-    def get_total_items(shopping_list) -> int:
-        return shopping_list.total_items
-
-    @staticmethod
-    def get_list_total(shopping_list):
-        return shopping_list.total
