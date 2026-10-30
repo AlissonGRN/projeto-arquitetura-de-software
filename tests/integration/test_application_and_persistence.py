@@ -57,7 +57,7 @@ class ApplicationAndPersistenceTests(unittest.TestCase):
         shopping_list = self.facade.create_list("Mercado")
         observer = Mock()
         shopping_list.add_observer(observer)
-        self.facade._product_service._product_dao.create = Mock(
+        self.facade._product_service._product_repository.create = Mock(
             side_effect=sqlite3.IntegrityError("simulated failure")
         )
         with self.assertRaises(sqlite3.IntegrityError):
