@@ -328,6 +328,28 @@ class ShoppingListView:
             side="left"
         )
 
+        self.undo_button = ttk.Button(
+            footer_frame,
+            text="Desfazer",
+            state="disabled"
+        )
+
+        self.undo_button.pack(
+            side="left",
+            padx=(10, 0)
+        )
+
+        self.redo_button = ttk.Button(
+            footer_frame,
+            text="Refazer",
+            state="disabled"
+        )
+
+        self.redo_button.pack(
+            side="left",
+            padx=(10, 0)
+        )
+
         totals_frame = ttk.Frame(
             footer_frame
         )
@@ -445,6 +467,15 @@ class ShoppingListView:
             text=f"Valor total: {self.format_currency(total)}"
         )
 
+    def update_history_buttons(self, can_undo, can_redo):
+        self.undo_button.config(
+            state="normal" if can_undo else "disabled"
+        )
+
+        self.redo_button.config(
+            state="normal" if can_redo else "disabled"
+        )
+
     # =========================
     # Eventos
     # =========================
@@ -456,6 +487,16 @@ class ShoppingListView:
 
     def set_remove_command(self, command):
         self.remove_button.config(
+            command=command
+        )
+
+    def set_undo_command(self, command):
+        self.undo_button.config(
+            command=command
+        )
+
+    def set_redo_command(self, command):
+        self.redo_button.config(
             command=command
         )
 

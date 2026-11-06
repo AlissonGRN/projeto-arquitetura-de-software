@@ -29,6 +29,31 @@ class ProductDAO:
             ).fetchone()
         return self._to_entity(row)
 
+    def restore(self, list_id: int, product: Product):
+        """Reinsere um produto removido mantendo o ID original."""
+        if product.id is None:
+            raise ValueError("O produto precisa ter um ID para ser restaurado.")
+        with self._database.connection_scope() as connection:
+            connection.execute(
+                """INSERT INTO products
+                   (id, list_id, name, quantity, category, price)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (
+                    product.id,
+                    list_id,
+                    product.name,
+                    product.quantity,
+                    product.category,
+                    product.unit_price.cents,
+                ),
+            )
+            row = connection.execute(
+                """SELECT id, list_id, name, quantity, category, price
+                   FROM products WHERE id = ?""",
+                (product.id,),
+            ).fetchone()
+        return self._to_entity(row)
+
     def get_by_list_id(self, list_id: int):
         with self._database.connection_scope() as connection:
             rows = connection.execute(

@@ -7,9 +7,10 @@ from app.presentation.shopping_list_view import ShoppingListView
 class AppController:
     """Controla a navegação entre o menu principal e uma lista."""
 
-    def __init__(self, root, facade):
+    def __init__(self, root, facade, shopping_service):
         self.root = root
         self.facade = facade
+        self.shopping_service = shopping_service
         self.main_view = None
         self.shopping_controller = None
         self.sorting_strategy = SortById()
@@ -37,7 +38,7 @@ class AppController:
         self.shopping_controller = ShoppingListController(
             model=shopping_list,
             view=view,
-            facade=self.facade,
+            shopping_service=self.shopping_service,
             on_back=self.show_main_menu,
         )
 

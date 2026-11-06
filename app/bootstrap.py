@@ -9,7 +9,7 @@ from app.infrastructure.shopping_list_dao import ShoppingListDAO
 from app.presentation.app_controller import AppController
 
 
-def build_facade(database_path=None):
+def _build_dependencies(database_path=None):
     database = Database.get_instance(database_path)
     database.initialize()
 
@@ -17,11 +17,16 @@ def build_facade(database_path=None):
     product_dao = ProductDAO(database)
     service = ShoppingService(shopping_list_dao, product_dao)
 
-    return ShoppingFacade(service)
+    return ShoppingFacade(service), service
+
+
+def build_facade(database_path=None):
+    facade, _ = _build_dependencies(database_path)
+    return facade
 
 
 def run():
-    facade = build_facade()
+    facade, service = _build_dependencies()
     root = tk.Tk()
-    AppController(root, facade)
+    AppController(root, facade, service)
     root.mainloop()

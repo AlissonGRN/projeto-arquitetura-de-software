@@ -63,3 +63,18 @@ class ShoppingService:
         if deleted:
             shopping_list.remove_product(product)
         return deleted
+
+    def restore_product(self, shopping_list: ShoppingList, product: Product):
+        """Reinsere um produto removido preservando seus dados e ID."""
+        if shopping_list.id is None:
+            raise ValueError("Salve a lista antes de restaurar produtos.")
+        if product.id is None:
+            raise ValueError("O produto não possui ID para ser restaurado.")
+        if self.shopping_list_dao.get_by_id(shopping_list.id) is None:
+            raise ValueError("A lista não existe mais no banco.")
+        if any(item.id == product.id for item in shopping_list.products):
+            return product
+        # O banco é atualizado primeiro. Só depois o Observer é notificado.
+        restored_product = self.product_dao.restore(shopping_list.id, product)
+        shopping_list.add_product(restored_product)
+        return restored_product

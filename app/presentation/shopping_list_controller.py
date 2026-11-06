@@ -1,5 +1,10 @@
 import sqlite3
 
+from app.application.commands import (
+    AddProductCommand,
+    CommandHistory,
+    RemoveProductCommand,
+)
 from app.domain.money import Money
 from app.domain.observer import Observer
 
@@ -7,11 +12,12 @@ from app.domain.observer import Observer
 class ShoppingListController(Observer):
     """Controla a tela de produtos e observa alterações na ShoppingList."""
 
-    def __init__(self, model, view, facade, on_back):
+    def __init__(self, model, view, shopping_service, on_back):
         self.model = model
         self.view = view
-        self.facade = facade
+        self.shopping_service = shopping_service
         self.on_back = on_back
+        self.command_history = CommandHistory()
         self.model.add_observer(self)
         self._configure_events()
         self.update_view()
@@ -23,6 +29,8 @@ class ShoppingListController(Observer):
     def _configure_events(self):
         self.view.set_add_command(self.add_product)
         self.view.set_remove_command(self.remove_product)
+        self.view.set_undo_command(self.undo)
+        self.view.set_redo_command(self.redo)
         self.view.set_back_command(self.go_back)
 
     def go_back(self):
@@ -46,9 +54,10 @@ class ShoppingListController(Observer):
 
         try:
             price = Money.from_brazilian(price_text)
-            self.facade.add_product(
-                self.model, name, quantity, category, price
+            command = AddProductCommand(
+                self.shopping_service, self.model, name, quantity, category, price
             )
+            self.command_history.execute(command)
         except (ValueError, TypeError) as error:
             self.view.show_error(str(error))
             return
@@ -71,9 +80,38 @@ class ShoppingListController(Observer):
         if not self.view.confirm_delete_product(product.name):
             return
         try:
-            self.facade.remove_product(self.model, product)
+            command = RemoveProductCommand(self.shopping_service, self.model, product)
+            self.command_history.execute(command)
+        except (ValueError, TypeError) as error:
+            self.view.show_error(str(error))
         except sqlite3.Error:
             self.view.show_error("Não foi possível excluir o produto do banco.")
+
+    def undo(self):
+        try:
+            if not self.command_history.undo():
+                self.view.show_error("Não há operação para desfazer.")
+                return
+        except (ValueError, TypeError) as error:
+            self.view.show_error(str(error))
+            return
+        except sqlite3.Error:
+            self.view.show_error("Não foi possível desfazer a operação no banco.")
+            return
+        self._update_history_buttons()
+
+    def redo(self):
+        try:
+            if not self.command_history.redo():
+                self.view.show_error("Não há operação para refazer.")
+                return
+        except (ValueError, TypeError) as error:
+            self.view.show_error(str(error))
+            return
+        except sqlite3.Error:
+            self.view.show_error("Não foi possível refazer a operação no banco.")
+            return
+        self._update_history_buttons()
 
     def update_view(self):
         self.view.clear_products()
@@ -87,3 +125,10 @@ class ShoppingListController(Observer):
             )
         self.view.update_items_total(self.model.total_items)
         self.view.update_price_total(self.model.total.cents)
+        self._update_history_buttons()
+
+    def _update_history_buttons(self):
+        self.view.update_history_buttons(
+            can_undo=self.command_history.can_undo,
+            can_redo=self.command_history.can_redo,
+        )

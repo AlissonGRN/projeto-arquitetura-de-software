@@ -23,6 +23,11 @@ O banco é criado automaticamente em `database/db.sqlite`.
     │   ├── shopping_list.py
     │   └── observer.py
     ├── application/
+    │   ├── commands/
+    │   │   ├── command.py
+    │   │   ├── add_product_command.py
+    │   │   ├── remove_product_command.py
+    │   │   └── command_history.py
     │   ├── shopping_service.py
     │   ├── shopping_facade.py
     │   └── sorting.py
@@ -45,6 +50,7 @@ O banco é criado automaticamente em `database/db.sqlite`.
 - **Facade:** `app/application/shopping_facade.py` é a entrada simples usada pelos Controllers e encaminha as operações ao ShoppingService.
 - **Observer:** `ShoppingList` é o Subject; `ShoppingListController` é o Observer. O evento está em `app/domain/observer.py`.
 - **Strategy:** `app/application/sorting.py` contém o contrato e as duas estratégias: ordenar por ID ou por nome.
+- **Command:** `app/application/commands/` encapsula adicionar e remover produtos em comandos com `execute()` e `undo()`. `CommandHistory` mantém as pilhas de desfazer e refazer, usadas pelos botões **Desfazer** e **Refazer** da tela da lista.
 - **Singleton:** `app/infrastructure/database.py` garante uma única instância do gerenciador SQLite. Cada operação abre e fecha sua própria conexão.
 
 ## Fluxo para adicionar um produto
